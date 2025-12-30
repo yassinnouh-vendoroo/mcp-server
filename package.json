@@ -1,7 +1,7 @@
 {
   "name": "vapi-mcp-server-enhanced",
   "description": "Vapi MCP Server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
