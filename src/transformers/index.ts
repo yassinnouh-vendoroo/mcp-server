@@ -312,12 +312,36 @@ export function transformGetCallTranscriptOutput(
   format: 'structured' | 'plain'
 ): z.infer<typeof GetCallTranscriptOutputSchema> {
   const artifact = (call as any).artifact;
-  const transcript = artifact?.transcript || [];
+  const transcript = artifact?.transcript;
+  const messages = artifact?.messages || [];
 
+  // Handle case where transcript is already a string (VAPI returns it this way)
+  if (typeof transcript === 'string') {
+    if (format === 'plain') {
+      return {
+        callId: call.id,
+        transcript: transcript,
+        duration: calculateDuration(call),
+      };
+    }
+    // For structured format, use messages array which has role/message structure
+    return {
+      callId: call.id,
+      transcript: messages.map((m: any) => ({
+        role: m.role || 'unknown',
+        message: m.message || m.content || '',
+        time: m.time,
+      })),
+      duration: calculateDuration(call),
+    };
+  }
+
+  // Handle case where transcript is an array
+  const transcriptArray = transcript || [];
   return {
     callId: call.id,
     transcript:
-      format === 'plain' ? transformTranscriptToPlainText(transcript) : transcript,
+      format === 'plain' ? transformTranscriptToPlainText(transcriptArray) : transcriptArray,
     duration: calculateDuration(call),
   };
 }
