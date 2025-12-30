@@ -10,6 +10,10 @@ import {
   UpdateAssistantInputSchema,
   CreateToolInputSchema,
   UpdateToolInputSchema,
+  ListCallsInputSchema,
+  GetCallTranscriptInputSchema,
+  GetCallTranscriptOutputSchema,
+  TranscriptEntrySchema,
 } from '../schemas/index.js';
 
 // ===== Assistant Transformers =====
@@ -180,6 +184,21 @@ function getAssistantTranscriberModel(
 
 // ===== Call Transformers =====
 
+// Transform list calls input to VAPI SDK format
+export function transformListCallsInput(
+  input: z.infer<typeof ListCallsInputSchema>
+): Record<string, unknown> {
+  return {
+    ...(input.assistantId && { assistantId: input.assistantId }),
+    ...(input.phoneNumberId && { phoneNumberId: input.phoneNumberId }),
+    ...(input.limit && { limit: input.limit }),
+    ...(input.createdAtGt && { createdAtGt: input.createdAtGt }),
+    ...(input.createdAtLt && { createdAtLt: input.createdAtLt }),
+    ...(input.createdAtGe && { createdAtGe: input.createdAtGe }),
+    ...(input.createdAtLe && { createdAtLe: input.createdAtLe }),
+  };
+}
+
 export function transformCallInput(
   input: z.infer<typeof CallInputSchema>
 ): Vapi.CreateCallDto {
@@ -208,14 +227,52 @@ export function transformCallInput(
   };
 }
 
+// Helper to calculate duration from timestamps
+function calculateDuration(call: Vapi.Call): number | undefined {
+  const startedAt = call.startedAt;
+  const endedAt = call.endedAt;
+
+  if (startedAt && endedAt) {
+    const start = new Date(startedAt).getTime();
+    const end = new Date(endedAt).getTime();
+    return Math.round((end - start) / 1000);
+  }
+  return undefined;
+}
+
+// Helper to format seconds as MM:SS
+export function formatTimestamp(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+// Transform transcript to plain text format
+export function transformTranscriptToPlainText(
+  transcript: z.infer<typeof TranscriptEntrySchema>[]
+): string {
+  return transcript
+    .map((entry) => {
+      const ts =
+        entry.time !== undefined ? `[${formatTimestamp(entry.time)}] ` : '';
+      const role = entry.role.charAt(0).toUpperCase() + entry.role.slice(1);
+      return `${ts}${role}: ${entry.message}`;
+    })
+    .join('\n');
+}
+
 export function transformCallOutput(
   call: Vapi.Call
 ): z.infer<typeof CallOutputSchema> {
+  const artifact = (call as any).artifact;
+  const analysis = (call as any).analysis;
+
   return {
     id: call.id,
     createdAt: call.createdAt,
     updatedAt: call.updatedAt,
     status: call.status || '',
+    type: call.type,
     endedReason: call.endedReason,
     assistantId: call.assistantId,
     phoneNumberId: call.phoneNumberId,
@@ -225,6 +282,43 @@ export function transformCallOutput(
         }
       : undefined,
     scheduledAt: call.schedulePlan?.earliestAt,
+    startedAt: call.startedAt,
+    endedAt: call.endedAt,
+    duration: calculateDuration(call),
+    cost: call.cost,
+    artifact: artifact
+      ? {
+          recording: artifact.recording,
+          stereoRecordingUrl: artifact.stereoRecordingUrl,
+          transcript: artifact.transcript,
+          messages: artifact.messages,
+          logUrl: artifact.logUrl,
+          variableValues: artifact.variableValues,
+        }
+      : undefined,
+    analysis: analysis
+      ? {
+          summary: analysis.summary,
+          successEvaluation: analysis.successEvaluation,
+          structuredData: analysis.structuredData,
+        }
+      : undefined,
+  };
+}
+
+// Transform get_call_transcript output
+export function transformGetCallTranscriptOutput(
+  call: Vapi.Call,
+  format: 'structured' | 'plain'
+): z.infer<typeof GetCallTranscriptOutputSchema> {
+  const artifact = (call as any).artifact;
+  const transcript = artifact?.transcript || [];
+
+  return {
+    callId: call.id,
+    transcript:
+      format === 'plain' ? transformTranscriptToPlainText(transcript) : transcript,
+    duration: calculateDuration(call),
   };
 }
 

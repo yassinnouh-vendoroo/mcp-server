@@ -253,6 +253,36 @@ export const UpdateAssistantInputSchema = z.object({
 
 // ===== Call Schemas =====
 
+// List calls input schema with filters
+export const ListCallsInputSchema = z.object({
+  assistantId: z.string().optional().describe('Filter by assistant ID'),
+  phoneNumberId: z.string().optional().describe('Filter by phone number ID'),
+  limit: z
+    .number()
+    .min(1)
+    .max(250)
+    .optional()
+    .default(100)
+    .describe('Maximum number of calls to return (default: 100, max: 250)'),
+  createdAtGt: z
+    .string()
+    .optional()
+    .describe('Filter calls created after this ISO datetime'),
+  createdAtLt: z
+    .string()
+    .optional()
+    .describe('Filter calls created before this ISO datetime'),
+  createdAtGe: z
+    .string()
+    .optional()
+    .describe('Filter calls created at or after this ISO datetime'),
+  createdAtLe: z
+    .string()
+    .optional()
+    .describe('Filter calls created at or before this ISO datetime'),
+});
+
+// Create call input schema
 export const CallInputSchema = z.object({
   assistantId: z
     .string()
@@ -287,8 +317,61 @@ export const CallInputSchema = z.object({
     .describe('Overrides for the assistant configuration'),
 });
 
+// Transcript entry schema (with timestamps)
+export const TranscriptEntrySchema = z.object({
+  role: z.enum(['assistant', 'user', 'system', 'tool']),
+  message: z.string(),
+  time: z.number().optional().describe('Timestamp in seconds from call start'),
+});
+
+// Message entry schema (simplified, no timestamps)
+export const MessageEntrySchema = z.object({
+  role: z.enum(['assistant', 'user', 'system', 'tool']),
+  message: z.string(),
+});
+
+// Call artifact schema
+export const CallArtifactSchema = z.object({
+  recording: z.string().optional().describe('URL to call recording MP3'),
+  stereoRecordingUrl: z
+    .string()
+    .optional()
+    .describe('URL to stereo call recording'),
+  transcript: z
+    .array(TranscriptEntrySchema)
+    .optional()
+    .describe('Full transcript with timestamps'),
+  messages: z
+    .array(MessageEntrySchema)
+    .optional()
+    .describe('Simplified message list'),
+  logUrl: z.string().optional().describe('URL to detailed call logs'),
+  variableValues: z
+    .record(z.unknown())
+    .optional()
+    .describe('Variables captured during call'),
+});
+
+// Call analysis schema
+export const CallAnalysisSchema = z.object({
+  summary: z.string().optional().describe('AI-generated call summary'),
+  successEvaluation: z
+    .string()
+    .optional()
+    .describe('Success evaluation result'),
+  structuredData: z
+    .record(z.unknown())
+    .optional()
+    .describe('Structured data extracted from call'),
+});
+
+// Enhanced call output schema with full data
 export const CallOutputSchema = BaseResponseSchema.extend({
   status: z.string(),
+  type: z
+    .string()
+    .optional()
+    .describe('Call type: inboundPhoneCall, outboundPhoneCall, webCall'),
   endedReason: z.string().optional(),
   assistantId: z.string().optional(),
   phoneNumberId: z.string().optional(),
@@ -298,10 +381,35 @@ export const CallOutputSchema = BaseResponseSchema.extend({
     })
     .optional(),
   scheduledAt: z.string().optional(),
+  startedAt: z.string().optional(),
+  endedAt: z.string().optional(),
+  duration: z.number().optional().describe('Call duration in seconds'),
+  cost: z.number().optional().describe('Call cost in USD'),
+  artifact: CallArtifactSchema.optional(),
+  analysis: CallAnalysisSchema.optional(),
 });
 
 export const GetCallInputSchema = z.object({
   callId: z.string().describe('ID of the call to get'),
+});
+
+// Get call transcript input schema
+export const GetCallTranscriptInputSchema = z.object({
+  callId: z.string().describe('The ID of the call'),
+  format: z
+    .enum(['structured', 'plain'])
+    .optional()
+    .default('structured')
+    .describe(
+      "Output format: 'structured' (array with timestamps) or 'plain' (formatted text)"
+    ),
+});
+
+// Get call transcript output schema
+export const GetCallTranscriptOutputSchema = z.object({
+  callId: z.string(),
+  transcript: z.union([z.array(TranscriptEntrySchema), z.string()]),
+  duration: z.number().optional().describe('Call duration in seconds'),
 });
 
 // ===== Phone Number Schemas =====
