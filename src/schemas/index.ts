@@ -524,3 +524,148 @@ export const ToolOutputSchema = BaseResponseSchema.extend({
   parameters: z.record(z.any()).describe('Parameters of the tool'),
   server: ServerSchema.describe('Server of the tool'),
 });
+
+// ===== Test Suite Schemas (Simulations) =====
+
+export const CreateTestSuiteInputSchema = z.object({
+  name: z.string().optional().describe('Name of the test suite'),
+  phoneNumberId: z.string().optional().describe('Phone number ID associated with this test suite'),
+  targetPhoneNumberId: z.string().optional().describe('Phone number ID being tested (in target plan)'),
+  testerAssistantId: z.string().optional().describe('Assistant ID to use as the tester (in tester plan)'),
+});
+
+export const GetTestSuiteInputSchema = z.object({
+  testSuiteId: z.string().describe('ID of the test suite'),
+});
+
+export const UpdateTestSuiteInputSchema = z.object({
+  testSuiteId: z.string().describe('ID of the test suite to update'),
+  name: z.string().optional().describe('New name for the test suite'),
+  phoneNumberId: z.string().optional().describe('New phone number ID'),
+});
+
+export const ListTestSuitesInputSchema = z.object({
+  limit: z.number().min(1).max(100).optional().default(10).describe('Maximum number of test suites to return'),
+});
+
+// Test case (individual test within a suite)
+const ScorerSchema = z.object({
+  type: z.literal('ai').default('ai').describe('Scorer type (always "ai")'),
+  rubric: z.string().describe('Rubric/criteria for the AI scorer to evaluate the test'),
+});
+
+export const CreateTestCaseInputSchema = z.object({
+  testSuiteId: z.string().describe('ID of the test suite to add the test to'),
+  type: z.enum(['voice', 'chat']).default('chat').describe('Type of test: "voice" for full voice simulation, "chat" for text-based'),
+  name: z.string().optional().describe('Name of the test case'),
+  script: z.string().describe('Script/instructions for the test - what the AI tester should do'),
+  scorers: z.array(ScorerSchema).describe('AI scorers with rubrics to evaluate the test outcome'),
+  numAttempts: z.number().optional().describe('Number of attempts allowed for the test'),
+});
+
+export const GetTestCaseInputSchema = z.object({
+  testSuiteId: z.string().describe('ID of the test suite'),
+  testId: z.string().describe('ID of the test case'),
+});
+
+export const UpdateTestCaseInputSchema = z.object({
+  testSuiteId: z.string().describe('ID of the test suite'),
+  testId: z.string().describe('ID of the test case to update'),
+  type: z.enum(['voice', 'chat']).describe('Type of test'),
+  name: z.string().optional().describe('New name for the test case'),
+  script: z.string().optional().describe('New script for the test'),
+  scorers: z.array(ScorerSchema).optional().describe('New scorers for the test'),
+  numAttempts: z.number().optional().describe('New number of attempts'),
+});
+
+export const DeleteTestCaseInputSchema = z.object({
+  testSuiteId: z.string().describe('ID of the test suite'),
+  testId: z.string().describe('ID of the test case to delete'),
+});
+
+export const ListTestCasesInputSchema = z.object({
+  testSuiteId: z.string().describe('ID of the test suite'),
+  limit: z.number().min(1).max(100).optional().default(10).describe('Maximum number of test cases to return'),
+});
+
+// Test suite runs
+export const CreateTestSuiteRunInputSchema = z.object({
+  testSuiteId: z.string().describe('ID of the test suite to run'),
+  name: z.string().optional().describe('Name for this test run'),
+});
+
+export const GetTestSuiteRunInputSchema = z.object({
+  testSuiteId: z.string().describe('ID of the test suite'),
+  runId: z.string().describe('ID of the test suite run'),
+});
+
+export const ListTestSuiteRunsInputSchema = z.object({
+  testSuiteId: z.string().describe('ID of the test suite'),
+  limit: z.number().min(1).max(100).optional().default(10).describe('Maximum number of runs to return'),
+});
+
+// ===== Eval Schemas (Mock Conversation Testing) =====
+
+const EvalJudgePlanSchema = z.object({
+  type: z.enum(['exact', 'regex', 'ai']).describe('Validation type: exact match, regex pattern, or AI judge'),
+  content: z.string().optional().describe('Expected content (for exact/regex) or ignored for AI'),
+  toolCalls: z.array(z.object({
+    name: z.string().describe('Function/tool name to validate'),
+    arguments: z.record(z.any()).optional().describe('Expected arguments (for exact match)'),
+  })).optional().describe('Tool calls to validate'),
+  model: z.object({
+    provider: z.string().default('openai').describe('AI judge provider'),
+    model: z.string().default('gpt-4o').describe('AI judge model'),
+    messages: z.array(z.object({
+      role: z.enum(['system', 'user']).describe('Message role'),
+      content: z.string().describe('Message content / evaluation prompt'),
+    })).describe('Messages for the AI judge'),
+  }).optional().describe('AI judge configuration (required when type is "ai")'),
+});
+
+const EvalContinuePlanSchema = z.object({
+  exitOnFailureEnabled: z.boolean().optional().describe('Exit evaluation if this step fails'),
+  overrideResponse: z.string().optional().describe('Override assistant response if validation fails'),
+});
+
+const EvalMessageSchema = z.object({
+  role: z.enum(['user', 'assistant', 'system', 'tool']).describe('Role of the message sender'),
+  content: z.string().optional().describe('Message content'),
+  judgePlan: EvalJudgePlanSchema.optional().describe('Validation plan for assistant messages'),
+  continuePlan: EvalContinuePlanSchema.optional().describe('Flow control after this message'),
+});
+
+export const CreateEvalInputSchema = z.object({
+  name: z.string().describe('Name of the evaluation'),
+  description: z.string().optional().describe('Description of what this eval tests'),
+  messages: z.array(EvalMessageSchema).describe('Mock conversation messages with validation'),
+});
+
+export const GetEvalInputSchema = z.object({
+  evalId: z.string().describe('ID of the evaluation'),
+});
+
+export const UpdateEvalInputSchema = z.object({
+  evalId: z.string().describe('ID of the evaluation to update'),
+  name: z.string().optional().describe('New name'),
+  description: z.string().optional().describe('New description'),
+  messages: z.array(EvalMessageSchema).optional().describe('New mock conversation messages'),
+});
+
+export const DeleteEvalInputSchema = z.object({
+  evalId: z.string().describe('ID of the evaluation to delete'),
+});
+
+export const ListEvalsInputSchema = z.object({
+  limit: z.number().min(1).max(100).optional().default(10).describe('Maximum number of evals to return'),
+});
+
+export const RunEvalInputSchema = z.object({
+  evalId: z.string().describe('ID of the evaluation to run'),
+  assistantId: z.string().optional().describe('Target assistant ID to test against'),
+  squadId: z.string().optional().describe('Target squad ID to test against (alternative to assistantId)'),
+});
+
+export const GetEvalRunInputSchema = z.object({
+  runId: z.string().describe('ID of the evaluation run'),
+});
