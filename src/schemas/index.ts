@@ -282,6 +282,42 @@ export const ListCallsInputSchema = z.object({
     .describe('Filter calls created at or before this ISO datetime'),
 });
 
+// Get call logs input schema — verbose Vapi platform logs (request/response bodies, webhooks, errors)
+export const GetCallLogsInputSchema = z.object({
+  callId: z
+    .string()
+    .optional()
+    .describe('Filter logs by call ID (most common use)'),
+  type: z
+    .enum(['Call', 'API', 'Webhook', 'Provider'])
+    .optional()
+    .describe('Filter by log type'),
+  webhookType: z
+    .string()
+    .optional()
+    .describe('Filter by webhook type when type=Webhook'),
+  assistantId: z.string().optional().describe('Filter by assistant ID'),
+  phoneNumberId: z.string().optional().describe('Filter by phone number ID'),
+  customerId: z.string().optional().describe('Filter by customer ID'),
+  squadId: z.string().optional().describe('Filter by squad ID'),
+  page: z.number().min(1).optional().describe('Page number (default 1)'),
+  sortOrder: z
+    .enum(['ASC', 'DESC'])
+    .optional()
+    .describe('Sort order, default DESC'),
+  limit: z
+    .number()
+    .min(1)
+    .max(1000)
+    .optional()
+    .default(100)
+    .describe('Max items to return (default 100)'),
+  createdAtGt: z.string().optional().describe('Logs created after this ISO datetime'),
+  createdAtLt: z.string().optional().describe('Logs created before this ISO datetime'),
+  createdAtGe: z.string().optional().describe('Logs created at or after this ISO datetime'),
+  createdAtLe: z.string().optional().describe('Logs created at or before this ISO datetime'),
+});
+
 // Create call input schema
 export const CallInputSchema = z.object({
   assistantId: z

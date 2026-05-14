@@ -176,6 +176,8 @@ Connect to Vapi's hosted MCP server from any MCP client:
 | `vapi_list_calls` | List call history |
 | `vapi_get_call` | Get call details |
 | `vapi_create_call` | Start outbound call (immediate or scheduled) |
+| `vapi_get_call_transcript` | Get call transcript (structured or plain text) |
+| `vapi_get_call_logs` | Get verbose platform logs for a call (requests, webhooks, errors) |
 
 ### Phone Numbers
 | Tool | Description |
@@ -254,3 +256,5 @@ npm test
 - [Vapi Dashboard](https://dashboard.vapi.ai)
 - [Vapi Remote MCP Server](https://mcp.vapi.ai/)
 - [Model Context Protocol](https://modelcontextprotocol.com/)
+
+Always use lsp

@@ -1,7 +1,7 @@
 {
   "name": "vapi-mcp-server-enhanced",
   "description": "Vapi MCP Server - Build AI voice assistants with Claude",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",

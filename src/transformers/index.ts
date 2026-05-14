@@ -11,6 +11,7 @@ import {
   CreateToolInputSchema,
   UpdateToolInputSchema,
   ListCallsInputSchema,
+  GetCallLogsInputSchema,
   GetCallTranscriptInputSchema,
   GetCallTranscriptOutputSchema,
   TranscriptEntrySchema,
@@ -191,6 +192,27 @@ export function transformListCallsInput(
   return {
     ...(input.assistantId && { assistantId: input.assistantId }),
     ...(input.phoneNumberId && { phoneNumberId: input.phoneNumberId }),
+    ...(input.limit && { limit: input.limit }),
+    ...(input.createdAtGt && { createdAtGt: input.createdAtGt }),
+    ...(input.createdAtLt && { createdAtLt: input.createdAtLt }),
+    ...(input.createdAtGe && { createdAtGe: input.createdAtGe }),
+    ...(input.createdAtLe && { createdAtLe: input.createdAtLe }),
+  };
+}
+
+export function transformGetCallLogsInput(
+  input: z.infer<typeof GetCallLogsInputSchema>
+): Record<string, unknown> {
+  return {
+    ...(input.callId && { callId: input.callId }),
+    ...(input.type && { type: input.type }),
+    ...(input.webhookType && { webhookType: input.webhookType }),
+    ...(input.assistantId && { assistantId: input.assistantId }),
+    ...(input.phoneNumberId && { phoneNumberId: input.phoneNumberId }),
+    ...(input.customerId && { customerId: input.customerId }),
+    ...(input.squadId && { squadId: input.squadId }),
+    ...(input.page && { page: input.page }),
+    ...(input.sortOrder && { sortOrder: input.sortOrder }),
     ...(input.limit && { limit: input.limit }),
     ...(input.createdAtGt && { createdAtGt: input.createdAtGt }),
     ...(input.createdAtLt && { createdAtLt: input.createdAtLt }),
