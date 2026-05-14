@@ -289,13 +289,31 @@ export const GetCallLogsInputSchema = z.object({
     .optional()
     .describe('Filter logs by call ID (most common use)'),
   type: z
-    .enum(['Call', 'API', 'Webhook', 'Provider'])
+    .array(z.enum(['Call', 'API', 'Webhook', 'Provider']))
     .optional()
-    .describe('Filter by log type'),
+    .describe('Filter by one or more log types. Allowed: Call, API, Webhook, Provider'),
   webhookType: z
-    .string()
+    .array(
+      z.enum([
+        'Assistant Request',
+        'Status Update',
+        'End Of Call Report',
+        'Hang',
+        'Tool Calls',
+        'Phone Call Control',
+        'Transfer Destination Request',
+        'Function Call',
+        'Speech Update',
+        'Transcript',
+        'Model Output',
+        'Voice Input',
+        'Conversation Update',
+        'User Interrupted',
+        'Language Changed',
+      ])
+    )
     .optional()
-    .describe('Filter by webhook type when type=Webhook'),
+    .describe('Filter by one or more webhook event types (used when type includes Webhook)'),
   assistantId: z.string().optional().describe('Filter by assistant ID'),
   phoneNumberId: z.string().optional().describe('Filter by phone number ID'),
   customerId: z.string().optional().describe('Filter by customer ID'),

@@ -12,7 +12,7 @@ import {
   transformCallInput,
   transformCallOutput,
   transformListCallsInput,
-  transformGetCallLogsInput,
+  buildGetCallLogsRequests,
   transformGetCallTranscriptOutput,
 } from '../transformers/index.js';
 import { createToolHandler } from './utils.js';
@@ -58,11 +58,14 @@ export const registerCallTools = (
     'Gets verbose Vapi platform logs for a call: request/response bodies, webhook payloads, HTTP status codes, durations, and errors. Pass callId to scope to a single call. Returns a paginated list of log entries.',
     GetCallLogsInputSchema.shape,
     createToolHandler(async (data) => {
-      const params = transformGetCallLogsInput(data);
-      const page = await vapiClient.logs.get(params);
+      const requests = buildGetCallLogsRequests(data);
+      const pages = await Promise.all(
+        requests.map((params) => vapiClient.logs.get(params))
+      );
+      const logs = pages.flatMap((p) => p.data);
       return {
-        logs: page.data,
-        hasNextPage: page.hasNextPage(),
+        logs,
+        hasNextPage: pages.some((p) => p.hasNextPage()),
       };
     })
   );

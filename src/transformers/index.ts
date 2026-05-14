@@ -200,13 +200,13 @@ export function transformListCallsInput(
   };
 }
 
-export function transformGetCallLogsInput(
+// Build the cartesian product of (type, webhookType) requests, since Vapi's
+// GET /logs only accepts a single value per filter. One entry => one request.
+export function buildGetCallLogsRequests(
   input: z.infer<typeof GetCallLogsInputSchema>
-): Record<string, unknown> {
-  return {
+): Record<string, unknown>[] {
+  const base: Record<string, unknown> = {
     ...(input.callId && { callId: input.callId }),
-    ...(input.type && { type: input.type }),
-    ...(input.webhookType && { webhookType: input.webhookType }),
     ...(input.assistantId && { assistantId: input.assistantId }),
     ...(input.phoneNumberId && { phoneNumberId: input.phoneNumberId }),
     ...(input.customerId && { customerId: input.customerId }),
@@ -219,7 +219,21 @@ export function transformGetCallLogsInput(
     ...(input.createdAtGe && { createdAtGe: input.createdAtGe }),
     ...(input.createdAtLe && { createdAtLe: input.createdAtLe }),
   };
+  const types = input.type?.length ? input.type : [undefined];
+  const webhookTypes = input.webhookType?.length ? input.webhookType : [undefined];
+  const requests: Record<string, unknown>[] = [];
+  for (const t of types) {
+    for (const w of webhookTypes) {
+      requests.push({
+        ...base,
+        ...(t && { type: t }),
+        ...(w && { webhookType: w }),
+      });
+    }
+  }
+  return requests;
 }
+
 
 export function transformCallInput(
   input: z.infer<typeof CallInputSchema>
