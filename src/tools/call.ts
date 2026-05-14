@@ -6,6 +6,7 @@ import {
   GetCallInputSchema,
   ListCallsInputSchema,
   GetCallLogsInputSchema,
+  CreateTestCallInputSchema,
   GetCallTranscriptInputSchema,
 } from '../schemas/index.js';
 import {
@@ -13,6 +14,7 @@ import {
   transformCallOutput,
   transformListCallsInput,
   buildGetCallLogsRequests,
+  transformCreateTestCallInput,
   transformGetCallTranscriptOutput,
 } from '../transformers/index.js';
 import { createToolHandler } from './utils.js';
@@ -67,6 +69,36 @@ export const registerCallTools = (
         logs,
         hasNextPage: pages.some((p) => p.hasNextPage()),
       };
+    })
+  );
+
+  server.tool(
+    'create_test_call',
+    "Creates an outbound test call against an existing assistant. Supports a scripted opening line (firstMessage), template variables (variableValues), and a full system-prompt replacement (scenario) — useful for simulating specific situations against the same assistant.",
+    CreateTestCallInputSchema.shape,
+    createToolHandler(async (data) => {
+      const dto = transformCreateTestCallInput(data);
+      if (data.scenario) {
+        const assistant = await vapiClient.assistants.get(data.assistantId);
+        const baseModel = assistant.model as unknown as Record<string, unknown> | undefined;
+        if (!baseModel) {
+          throw new Error(
+            `Assistant ${data.assistantId} has no model configured; cannot apply scenario override.`
+          );
+        }
+        const existingMessages = (baseModel.messages as Array<{ role: string; content: string }> | undefined) ?? [];
+        const nonSystem = existingMessages.filter((m) => m.role !== 'system');
+        const model = {
+          ...baseModel,
+          messages: [{ role: 'system', content: data.scenario }, ...nonSystem],
+        };
+        dto.assistantOverrides = {
+          ...(dto.assistantOverrides ?? {}),
+          model: model as unknown as Vapi.AssistantOverridesModel,
+        };
+      }
+      const call = await vapiClient.calls.create(dto);
+      return transformCallOutput(call as unknown as Vapi.Call);
     })
   );
 

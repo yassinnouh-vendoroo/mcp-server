@@ -371,6 +371,40 @@ export const CallInputSchema = z.object({
     .describe('Overrides for the assistant configuration'),
 });
 
+// Test call input — script an outbound call against an existing assistant.
+// Uses assistantOverrides under the hood (firstMessage + variableValues),
+// so the assistant's existing model/prompt is reused without rebuilding it.
+export const CreateTestCallInputSchema = z.object({
+  assistantId: z.string().describe('Assistant to test'),
+  phoneNumberId: z.string().describe('Vapi phone number to call from'),
+  customerNumber: z
+    .string()
+    .describe('Customer phone number to call (E.164, e.g. +14155551234)'),
+  firstMessage: z
+    .string()
+    .optional()
+    .describe("Override the assistant's opening line for this test call"),
+  scenario: z
+    .string()
+    .optional()
+    .describe(
+      "Free-form scenario script. Fully replaces the assistant's system prompt for this call only (e.g. 'You are a frustrated customer disputing a $200 charge. Be terse.'). The assistant's existing model/provider is preserved."
+    ),
+  variableValues: z
+    .record(z.string(), z.any())
+    .optional()
+    .describe(
+      'Template variables substituted into the assistant\'s prompt for this call, e.g. {"name":"Joe","scenario":"angry customer"}'
+    ),
+  maxDurationSeconds: z
+    .number()
+    .min(10)
+    .max(3600)
+    .optional()
+    .describe('Hard cap on call length (default 600 = 10 min)'),
+  name: z.string().optional().describe('Optional label for the test call'),
+});
+
 // Transcript entry schema (with timestamps)
 export const TranscriptEntrySchema = z.object({
   role: z.enum(['assistant', 'user', 'system', 'tool']),

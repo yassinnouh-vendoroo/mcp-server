@@ -12,6 +12,7 @@ import {
   UpdateToolInputSchema,
   ListCallsInputSchema,
   GetCallLogsInputSchema,
+  CreateTestCallInputSchema,
   GetCallTranscriptInputSchema,
   GetCallTranscriptOutputSchema,
   TranscriptEntrySchema,
@@ -234,6 +235,25 @@ export function buildGetCallLogsRequests(
   return requests;
 }
 
+
+export function transformCreateTestCallInput(
+  input: z.infer<typeof CreateTestCallInputSchema>
+): Vapi.CreateCallDto {
+  const overrides: Vapi.AssistantOverrides = {
+    ...(input.firstMessage && { firstMessage: input.firstMessage }),
+    ...(input.variableValues && { variableValues: input.variableValues }),
+    ...(input.maxDurationSeconds && {
+      maxDurationSeconds: input.maxDurationSeconds,
+    }),
+  };
+  return {
+    assistantId: input.assistantId,
+    phoneNumberId: input.phoneNumberId,
+    customer: { number: input.customerNumber },
+    ...(input.name && { name: input.name }),
+    ...(Object.keys(overrides).length > 0 && { assistantOverrides: overrides }),
+  };
+}
 
 export function transformCallInput(
   input: z.infer<typeof CallInputSchema>
