@@ -7,6 +7,7 @@ import { registerPhoneNumberTools } from './phone-number.js';
 import { registerToolTools } from './tool.js';
 import { registerTestSuiteTools } from './test-suite.js';
 import { registerEvalTools } from './eval.js';
+import { registerChatTools } from './chat.js';
 
 export const registerAllTools = (server: McpServer, vapiClient: VapiClient) => {
   registerAssistantTools(server, vapiClient);
@@ -15,4 +16,5 @@ export const registerAllTools = (server: McpServer, vapiClient: VapiClient) => {
   registerToolTools(server, vapiClient);
   registerTestSuiteTools(server, vapiClient);
   registerEvalTools(server);
+  registerChatTools(server);
 };

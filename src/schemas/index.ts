@@ -757,3 +757,79 @@ export const RunEvalInputSchema = z.object({
 export const GetEvalRunInputSchema = z.object({
   runId: z.string().describe('ID of the evaluation run'),
 });
+
+// ===== Chat & Session Schemas =====
+
+export const ListChatsInputSchema = z.object({
+  assistantId: z.string().optional().describe('Filter by assistant ID'),
+  sessionId: z.string().optional().describe('Filter by session ID'),
+  previousChatId: z.string().optional().describe('Filter by previous chat ID'),
+  squadId: z.string().optional().describe('Filter by squad ID'),
+  limit: z
+    .number()
+    .min(1)
+    .max(250)
+    .optional()
+    .default(100)
+    .describe('Max chats to return (default 100, max 250)'),
+  page: z.number().min(1).optional().describe('Page number (default 1)'),
+  sortOrder: z
+    .enum(['ASC', 'DESC'])
+    .optional()
+    .describe('Sort order, default DESC'),
+  createdAtGt: z
+    .string()
+    .optional()
+    .describe('Chats created after this ISO datetime'),
+  createdAtLt: z
+    .string()
+    .optional()
+    .describe('Chats created before this ISO datetime'),
+  createdAtGe: z
+    .string()
+    .optional()
+    .describe('Chats created at or after this ISO datetime'),
+  createdAtLe: z
+    .string()
+    .optional()
+    .describe('Chats created at or before this ISO datetime'),
+  updatedAtGt: z
+    .string()
+    .optional()
+    .describe('Chats updated after this ISO datetime'),
+  updatedAtLt: z
+    .string()
+    .optional()
+    .describe('Chats updated before this ISO datetime'),
+});
+
+export const GetChatInputSchema = z.object({
+  chatId: z.string().describe('ID of the chat to get'),
+});
+
+export const ListSessionsInputSchema = z.object({
+  id: z.string().optional().describe('Filter by session ID'),
+  name: z.string().optional().describe('Filter by session name'),
+  assistantId: z.string().optional().describe('Filter by assistant ID'),
+  squadId: z.string().optional().describe('Filter by squad ID'),
+  workflowId: z.string().optional().describe('Filter by workflow ID'),
+  limit: z
+    .number()
+    .min(1)
+    .max(250)
+    .optional()
+    .default(100)
+    .describe('Max sessions to return (default 100, max 250)'),
+  createdAtGt: z
+    .string()
+    .optional()
+    .describe('Sessions created after this ISO datetime'),
+  createdAtLt: z
+    .string()
+    .optional()
+    .describe('Sessions created before this ISO datetime'),
+});
+
+export const GetSessionInputSchema = z.object({
+  sessionId: z.string().describe('ID of the session to get'),
+});
